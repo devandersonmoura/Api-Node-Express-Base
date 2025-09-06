@@ -28,11 +28,7 @@ router.put('/:id', validate(updateUserSchema), asyncHandler(ctrl.update));
 // Remove usuário
 router.delete('/:id', asyncHandler(ctrl.destroy));
 
-// Promove usuário para admin
-router.post('/:id/promote', asyncHandler(ctrl.promote));
-
-// Rebaixa usuário para role 'user'
-router.post('/:id/demote', asyncHandler(ctrl.demote));
+// (removidos) promote/demote: usar PUT /:id/role com body { role }
 
 // Define explicitamente o papel do usuário (user/admin)
 router.put('/:id/role', validate(updateRoleSchema), asyncHandler(ctrl.setRole));

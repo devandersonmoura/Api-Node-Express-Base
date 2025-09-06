@@ -30,9 +30,7 @@ API em Node.js/Express com MySQL (sem ORM), autenticação JWT e documentação 
 - `GET /health` → `{ "status": "ok" }`
 - `GET /ready` → `{ "status": "ready" }` quando o MySQL estiver acessível; caso contrário retorna 503
 - Users: `GET/POST /api/users`, `GET/PUT/DELETE /api/users/:id`
-- Users (admin): `POST /api/users/:id/promote` (promover a admin)
- - Users (admin): `POST /api/users/:id/demote` (rebaixar para user)
- - Users (admin): `PUT /api/users/:id/role` (definir papel explicitamente: `user` | `admin`)
+- Users (admin): `PUT /api/users/:id/role` (definir papel explicitamente: `user` | `admin`)
 - Products: `GET/POST /api/products`, `GET/PUT/DELETE /api/products/:id`
 - Auth: `POST /api/auth/register`, `POST /api/auth/login`, `GET /api/auth/me`
 
@@ -88,8 +86,7 @@ scripts/
 - Validação com `Joi` no middleware `validate`.
 - Autenticação por JWT com `jsonwebtoken` e middleware `requireAuth`.
 - RBAC: rotas de usuários exigem `admin`; produtos exigem `admin` para criar/atualizar/remover.
-  - Endpoints de admin: `POST /api/users/:id/promote`, `POST /api/users/:id/demote`.
-  - Admin também pode definir o papel diretamente: `PUT /api/users/:id/role` com body `{ "role": "user" | "admin" }`.
+  - Admin define o papel via `PUT /api/users/:id/role` com body `{ "role": "user" | "admin" }`.
   - Proteções: não é permitido rebaixar a si mesmo nem remover o último admin.
 - `/docs` protegido com Basic Auth (configurável por env): `DOCS_BASIC_USER` e `DOCS_BASIC_PASS`.
 

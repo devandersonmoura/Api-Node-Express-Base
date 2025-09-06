@@ -313,35 +313,6 @@
         "responses": { "204": { "description": "Sem conteúdo" }, "401": { "description": "Não autorizado", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } }, "403": { "description": "Proibido (admin apenas)", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } } }
       }
     },
-    "/api/users/{id}/promote": {
-      "post": {
-        "summary": "Promover usuário a admin",
-        "tags": ["Users"],
-        "security": [{ "bearerAuth": [] }],
-        "parameters": [ { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } } ],
-        "responses": {
-          "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/UserItemResponse" } } } },
-          "401": { "description": "Não autorizado", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } },
-          "403": { "description": "Proibido (admin apenas)", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } },
-          "404": { "description": "Não encontrado", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } }
-        }
-      }
-    },
-    "/api/users/{id}/demote": {
-      "post": {
-        "summary": "Rebaixar usuário para user",
-        "tags": ["Users"],
-        "security": [{ "bearerAuth": [] }],
-        "parameters": [ { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } } ],
-        "responses": {
-          "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/UserItemResponse" } } } },
-          "400": { "description": "Bloqueado (auto rebaixamento ou último admin)", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } },
-          "401": { "description": "Não autorizado", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } },
-          "403": { "description": "Proibido (admin apenas)", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } },
-          "404": { "description": "Não encontrado", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } }
-        }
-      }
-    },
     "/api/users/{id}/role": {
       "put": {
         "summary": "Definir papel do usuário (user/admin)",

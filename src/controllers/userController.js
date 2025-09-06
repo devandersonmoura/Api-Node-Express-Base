@@ -44,33 +44,6 @@ async function destroy(req, res) {
   return res.status(204).send();
 }
 
-/** Promove um usuário para admin. */
-async function promote(req, res) {
-  const { id } = req.params;
-  const before = await userService.getUser(Number(id));
-  const updated = await userService.promoteUser(Number(id));
-  if (req.log && typeof req.log.info === 'function') {
-    req.log.info({ action: 'promote', actorId: req.user.id, targetId: Number(id), from: before.role, to: 'admin' }, 'role change');
-  }
-  return success(res, updated);
-}
-
-/** Rebaixa um usuário para role 'user'. */
-async function demote(req, res) {
-  const { id } = req.params;
-  if (req.user && req.user.id === Number(id)) {
-    const err = new Error('Você não pode rebaixar a si mesmo');
-    err.status = 400;
-    throw err;
-  }
-  const before = await userService.getUser(Number(id));
-  const updated = await userService.demoteUser(Number(id));
-  if (req.log && typeof req.log.info === 'function') {
-    req.log.info({ action: 'demote', actorId: req.user.id, targetId: Number(id), from: before.role, to: 'user' }, 'role change');
-  }
-  return success(res, updated);
-}
-
 /** Define o papel do usuário explicitamente (body.role). */
 async function setRole(req, res) {
   const { id } = req.params;
@@ -88,4 +61,4 @@ async function setRole(req, res) {
   return success(res, updated);
 }
 
-module.exports = { index, show, store, update, destroy, promote, demote, setRole };
+module.exports = { index, show, store, update, destroy, setRole };

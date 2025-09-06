@@ -23,7 +23,7 @@
           "id": { "type": "integer" },
           "name": { "type": "string" },
           "email": { "type": "string" },
-          "role": { "type": "string", "enum": ["user","admin"], "example": "user" },
+          "role": { "type": "string", "enum": ["user", "admin"], "example": "user" },
           "created_at": { "type": "string", "format": "date-time" },
           "updated_at": { "type": "string", "format": "date-time" }
         }
@@ -34,7 +34,7 @@
           "id": { "type": "integer" },
           "name": { "type": "string" },
           "email": { "type": "string" },
-          "role": { "type": "string", "enum": ["user","admin"], "example": "user" }
+          "role": { "type": "string", "enum": ["user", "admin"], "example": "user" }
         }
       },
       "UserCreate": {
@@ -43,7 +43,7 @@
         "properties": {
           "name": { "type": "string", "minLength": 2, "maxLength": 120 },
           "email": { "type": "string", "format": "email" },
-          "password": { "type": "string", "minLength": 6, "maxLength": 128 }
+          "password": { "type": "string", "minLength": 8, "maxLength": 128 }
         }
       },
       "UserUpdate": {
@@ -51,7 +51,7 @@
         "properties": {
           "name": { "type": "string", "minLength": 2, "maxLength": 120 },
           "email": { "type": "string", "format": "email" },
-          "password": { "type": "string", "minLength": 6, "maxLength": 128 }
+          "password": { "type": "string", "minLength": 8, "maxLength": 128 }
         }
       },
       "Product": {
@@ -83,7 +83,7 @@
         "type": "object",
         "required": ["role"],
         "properties": {
-          "role": { "type": "string", "enum": ["user","admin"] }
+          "role": { "type": "string", "enum": ["user", "admin"] }
         }
       },
       "Meta": {
@@ -140,21 +140,22 @@
             "type": "object",
             "properties": {
               "user": { "$ref": "#/components/schemas/User" },
-              "token": { "type": "string" }
+              "accessToken": { "type": "string" },
+              "refreshToken": { "type": "string" }
             }
           }
         }
       },
-      "MeResponse": {
+      "RefreshRequest": {
+        "type": "object",
+        "required": ["refreshToken"],
+        "properties": { "refreshToken": { "type": "string" } }
+      },
+      "RefreshResponse": {
         "type": "object",
         "properties": {
           "success": { "type": "boolean", "example": true },
-          "data": {
-            "type": "object",
-            "properties": {
-              "user": { "$ref": "#/components/schemas/AuthMeUser" }
-            }
-          }
+          "data": { "type": "object", "properties": { "accessToken": { "type": "string" } } }
         }
       }
     }
@@ -168,65 +169,32 @@
   "paths": {
     "/health": {
       "get": {
-        "summary": "Health check",
+        "summary": "Verificar saúde do serviço",
         "tags": ["Health"],
         "responses": { "200": { "description": "OK" } }
       }
     },
     "/ready": {
       "get": {
-        "summary": "Readiness check (MySQL)",
+        "summary": "Readiness (checa MySQL)",
         "tags": ["Health"],
-        "responses": {
-          "200": { "description": "Pronto (DB ok)" },
-          "503": { "description": "Indisponível (DB com problema)" }
-        }
+        "responses": { "200": { "description": "Pronto (DB ok)" }, "503": { "description": "Indisponível (DB com problema)" } }
       }
     },
     "/api/auth/register": {
       "post": {
         "summary": "Registrar usuário",
         "tags": ["Auth"],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": { "$ref": "#/components/schemas/UserCreate" }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Criado",
-            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AuthResponse" } } }
-          },
-          "409": { "description": "E-mail já cadastrado", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } }
-        }
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/UserCreate" } } } },
+        "responses": { "201": { "description": "Criado", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AuthResponse" } } } }, "409": { "description": "E-mail já cadastrado", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } } }
       }
     },
     "/api/auth/login": {
       "post": {
         "summary": "Login",
         "tags": ["Auth"],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": ["email", "password"],
-                "properties": {
-                  "email": { "type": "string" },
-                  "password": { "type": "string" }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AuthResponse" } } } },
-          "401": { "description": "Credenciais inválidas", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } }
-        }
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "required": ["email", "password"], "properties": { "email": { "type": "string" }, "password": { "type": "string" } } } } } },
+        "responses": { "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AuthResponse" } } } }, "401": { "description": "Credenciais inválidas", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } }, "429": { "description": "Muitas tentativas. Tente mais tarde.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } } }
       }
     },
     "/api/auth/me": {
@@ -234,10 +202,24 @@
         "summary": "Dados do usuário autenticado",
         "tags": ["Auth"],
         "security": [{ "bearerAuth": [] }],
-        "responses": {
-          "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/MeResponse" } } } },
-          "401": { "description": "Não autorizado", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } }
-        }
+        "responses": { "200": { "description": "OK" }, "401": { "description": "Não autorizado" } }
+      }
+    },
+    "/api/auth/refresh": {
+      "post": {
+        "summary": "Gerar novo accessToken a partir do refreshToken",
+        "tags": ["Auth"],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/RefreshRequest" } } } },
+        "responses": { "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/RefreshResponse" } } } }, "401": { "description": "Refresh token inválido", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } } }
+      }
+    },
+    "/api/auth/logout": {
+      "post": {
+        "summary": "Logout (revoga refresh token ou todos do usuário)",
+        "tags": ["Auth"],
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": { "required": false, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/RefreshRequest" } } } },
+        "responses": { "204": { "description": "Sem conteúdo" }, "401": { "description": "Não autorizado" } }
       }
     },
     "/api/users": {
@@ -250,28 +232,14 @@
           { "name": "limit", "in": "query", "schema": { "type": "integer" } },
           { "name": "search", "in": "query", "schema": { "type": "string" } }
         ],
-        "responses": {
-          "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/UserListResponse" } } } },
-          "401": { "description": "Não autorizado", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } }
-        }
+        "responses": { "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/UserListResponse" } } } }, "401": { "description": "Não autorizado", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } } }
       },
       "post": {
         "summary": "Criar usuário",
         "tags": ["Users"],
         "security": [{ "bearerAuth": [] }],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": { "$ref": "#/components/schemas/UserCreate" }
-            }
-          }
-        },
-        "responses": {
-          "201": { "description": "Criado", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/UserItemResponse" } } } },
-          "401": { "description": "Não autorizado", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } },
-          "409": { "description": "E-mail já cadastrado", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } }
-        }
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/UserCreate" } } } },
+        "responses": { "201": { "description": "Criado", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/UserItemResponse" } } } }, "401": { "description": "Não autorizado", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } }, "409": { "description": "E-mail já cadastrado", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } } }
       }
     },
     "/api/users/{id}": {
@@ -280,30 +248,15 @@
         "tags": ["Users"],
         "security": [{ "bearerAuth": [] }],
         "parameters": [ { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } } ],
-        "responses": {
-          "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/UserItemResponse" } } } },
-          "401": { "description": "Não autorizado", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } },
-          "404": { "description": "Não encontrado", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } }
-        }
+        "responses": { "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/UserItemResponse" } } } }, "401": { "description": "Não autorizado", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } }, "404": { "description": "Não encontrado", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } } }
       },
       "put": {
         "summary": "Atualizar usuário",
         "tags": ["Users"],
         "security": [{ "bearerAuth": [] }],
         "parameters": [ { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } } ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": { "$ref": "#/components/schemas/UserUpdate" }
-            }
-          }
-        },
-        "responses": {
-          "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/UserItemResponse" } } } },
-          "401": { "description": "Não autorizado", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } },
-          "404": { "description": "Não encontrado", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } }
-        }
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/UserUpdate" } } } },
+        "responses": { "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/UserItemResponse" } } } }, "401": { "description": "Não autorizado", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } }, "404": { "description": "Não encontrado", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } } }
       },
       "delete": {
         "summary": "Remover usuário",
@@ -319,21 +272,8 @@
         "tags": ["Users"],
         "security": [{ "bearerAuth": [] }],
         "parameters": [ { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } } ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": { "$ref": "#/components/schemas/RoleUpdate" }
-            }
-          }
-        },
-        "responses": {
-          "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/UserItemResponse" } } } },
-          "400": { "description": "Bloqueado (auto rebaixamento ou último admin)", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } },
-          "401": { "description": "Não autorizado", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } },
-          "403": { "description": "Proibido (admin apenas)", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } },
-          "404": { "description": "Não encontrado", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } }
-        }
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/RoleUpdate" } } } },
+        "responses": { "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/UserItemResponse" } } } }, "400": { "description": "Bloqueado (auto rebaixamento ou último admin)", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } }, "401": { "description": "Não autorizado", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } }, "403": { "description": "Proibido (admin apenas)", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } }, "404": { "description": "Não encontrado", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } } }
       }
     },
     "/api/products": {
@@ -346,23 +286,13 @@
           { "name": "limit", "in": "query", "schema": { "type": "integer" } },
           { "name": "search", "in": "query", "schema": { "type": "string" } }
         ],
-        "responses": {
-          "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ProductListResponse" } } } },
-          "401": { "description": "Não autorizado", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } }
-        }
+        "responses": { "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ProductListResponse" } } } }, "401": { "description": "Não autorizado", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } } }
       },
       "post": {
         "summary": "Criar produto",
         "tags": ["Products"],
         "security": [{ "bearerAuth": [] }],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": { "$ref": "#/components/schemas/ProductCreate" }
-            }
-          }
-        },
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ProductCreate" } } } },
         "responses": { "201": { "description": "Criado", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ProductItemResponse" } } } }, "401": { "description": "Não autorizado", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } }, "403": { "description": "Proibido (admin apenas)", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } } }
       }
     },
@@ -372,25 +302,14 @@
         "tags": ["Products"],
         "security": [{ "bearerAuth": [] }],
         "parameters": [ { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } } ],
-        "responses": {
-          "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ProductItemResponse" } } } },
-          "401": { "description": "Não autorizado", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } },
-          "404": { "description": "Não encontrado", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } }
-        }
+        "responses": { "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ProductItemResponse" } } } }, "401": { "description": "Não autorizado", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } }, "404": { "description": "Não encontrado", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } } }
       },
       "put": {
         "summary": "Atualizar produto",
         "tags": ["Products"],
         "security": [{ "bearerAuth": [] }],
         "parameters": [ { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } } ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": { "$ref": "#/components/schemas/ProductUpdate" }
-            }
-          }
-        },
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ProductUpdate" } } } },
         "responses": { "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ProductItemResponse" } } } }, "401": { "description": "Não autorizado", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } }, "403": { "description": "Proibido (admin apenas)", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } }, "404": { "description": "Não encontrado", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } } }
       },
       "delete": {

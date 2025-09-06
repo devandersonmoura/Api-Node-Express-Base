@@ -24,6 +24,7 @@ API em Node.js/Express com MySQL (sem ORM), autenticação JWT e documentação 
 
 - Desenvolvimento: `npm run dev` (auto-reload com nodemon)
 - Produção: `npm start`
+- Testes: `npm test` (unitários de serviços e integração básica com supertest)
 
 ## Endpoints
 
@@ -33,19 +34,22 @@ API em Node.js/Express com MySQL (sem ORM), autenticação JWT e documentação 
 - Users (admin): `PUT /api/users/:id/role` (definir papel explicitamente: `user` | `admin`)
 - Products: `GET/POST /api/products`, `GET/PUT/DELETE /api/products/:id`
 - Auth: `POST /api/auth/register`, `POST /api/auth/login`, `GET /api/auth/me`
+- Tokens: `POST /api/auth/refresh`, `POST /api/auth/logout`
 
-## Autenticação JWT
+## Autenticação (tokens e política)
 
-- Após `POST /api/auth/login` ou `POST /api/auth/register`, use o token retornado no header `Authorization: Bearer <token>`.
-- Todas as rotas de `/api/users` e `/api/products` exigem JWT.
-- Ajuste `JWT_SECRET` e `JWT_EXPIRES_IN` no `.env` conforme necessário.
-- Dica (Swagger): clique em “Authorize” em `/docs` e cole `Bearer <seu-token>`.
+- Após login/registro, a API retorna `accessToken` (JWT de curta duração) e `refreshToken`.
+- Use o `accessToken` no header: `Authorization: Bearer <token>`.
+- Atualização do token: `POST /api/auth/refresh` com `{ "refreshToken": "..." }` retorna novo `accessToken`.
+- Logout: `POST /api/auth/logout` (com JWT). Envie `refreshToken` no body para revogar um específico; sem body, revoga todos do usuário atual.
+- Política de senha: mínimo 8 caracteres, precisa conter letras e números.
+- Bloqueio por tentativas: após `AUTH_MAX_ATTEMPTS` em `AUTH_WINDOW_MINUTES`, bloqueia por `AUTH_LOCKOUT_MINUTES`.
 
 ## Swagger
 
 - UI da documentação: `http://localhost:3000/docs`
 - Especificação OpenAPI: `docs/openapi.json`
- - Protegido com Basic Auth: `admin` / `admin` (padrões configuráveis via `.env`)
+- Protegido com Basic Auth: `admin` / `admin` (padrões configuráveis via `.env`)
 
 ## Health vs Ready
 

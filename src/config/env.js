@@ -16,6 +16,12 @@ const env = {
     secret: process.env.JWT_SECRET || 'changeme-very-secret',
     expiresIn: process.env.JWT_EXPIRES_IN || '1d'
   },
+  auth: {
+    refreshTokenDays: parseInt(process.env.REFRESH_TOKEN_EXPIRES_DAYS || '7', 10),
+    maxAttempts: parseInt(process.env.AUTH_MAX_ATTEMPTS || '5', 10),
+    windowMinutes: parseInt(process.env.AUTH_WINDOW_MINUTES || '15', 10),
+    lockoutMinutes: parseInt(process.env.AUTH_LOCKOUT_MINUTES || '15', 10)
+  },
   http: {
     jsonLimit: process.env.JSON_LIMIT || '1mb',
     corsOrigins: (process.env.CORS_ORIGINS || '*')

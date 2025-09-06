@@ -17,7 +17,7 @@ const app = express();
 
 // Middlewares globais
 app.disable('x-powered-by');
-app.set('trust proxy', true); // permite obter IP real atrás de proxies
+app.set('trust proxy', false); // permite obter IP real atrás de proxies
 app.use(helmet());
 app.use(hpp());
 
@@ -41,7 +41,7 @@ app.use(pinoHttp({
           }
         }
       } catch (_e) {
-        // ignore parse errors
+        // ignora erros de parse
       }
     }
     return {
@@ -125,18 +125,22 @@ app.use('/api', apiRoutes);
 
 // Swagger UI
 const swaggerDocPath = path.join(__dirname, '..', 'docs', 'openapi.json');
-// Lazy load JSON to avoid require cache issues during dev
+// Carrega JSON sob demanda para evitar cache do require durante o desenvolvimento
 app.use('/docs', basicAuthForDocs, swaggerUi.serve, (req, res, next) => {
   // eslint-disable-next-line global-require, import/no-dynamic-require
   const spec = require(swaggerDocPath);
   return swaggerUi.setup(spec)(req, res, next);
 });
 
-// Not found + error handling
+// Rotas inexistentes + tratamento de erros
 app.use(notFound);
 app.use(errorHandler);
 
-// Inicia o servidor HTTP
-app.listen(env.port, () => {
-  console.log(`Server listening on http://localhost:${env.port}`);
-});
+// Inicia o servidor HTTP quando não for importado por testes
+if (require.main === module) {
+  app.listen(env.port, () => {
+    console.log(`Servidor ouvindo em http://localhost:${env.port}`);
+  });
+}
+
+module.exports = app;

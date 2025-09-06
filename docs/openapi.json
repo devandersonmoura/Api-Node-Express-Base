@@ -23,6 +23,7 @@
           "id": { "type": "integer" },
           "name": { "type": "string" },
           "email": { "type": "string" },
+          "role": { "type": "string", "enum": ["user","admin"], "example": "user" },
           "created_at": { "type": "string", "format": "date-time" },
           "updated_at": { "type": "string", "format": "date-time" }
         }
@@ -32,7 +33,8 @@
         "properties": {
           "id": { "type": "integer" },
           "name": { "type": "string" },
-          "email": { "type": "string" }
+          "email": { "type": "string" },
+          "role": { "type": "string", "enum": ["user","admin"], "example": "user" }
         }
       },
       "UserCreate": {
@@ -301,7 +303,21 @@
         "tags": ["Users"],
         "security": [{ "bearerAuth": [] }],
         "parameters": [ { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } } ],
-        "responses": { "204": { "description": "Sem conteúdo" }, "401": { "description": "Não autorizado", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } } }
+        "responses": { "204": { "description": "Sem conteúdo" }, "401": { "description": "Não autorizado", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } }, "403": { "description": "Proibido (admin apenas)", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } } }
+      }
+    },
+    "/api/users/{id}/promote": {
+      "post": {
+        "summary": "Promover usuário a admin",
+        "tags": ["Users"],
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [ { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } } ],
+        "responses": {
+          "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/UserItemResponse" } } } },
+          "401": { "description": "Não autorizado", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } },
+          "403": { "description": "Proibido (admin apenas)", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } },
+          "404": { "description": "Não encontrado", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } }
+        }
       }
     },
     "/api/products": {
@@ -331,10 +347,7 @@
             }
           }
         },
-        "responses": {
-          "201": { "description": "Criado", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ProductItemResponse" } } } },
-          "401": { "description": "Não autorizado", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } }
-        }
+        "responses": { "201": { "description": "Criado", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ProductItemResponse" } } } }, "401": { "description": "Não autorizado", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } }, "403": { "description": "Proibido (admin apenas)", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } } }
       }
     },
     "/api/products/{id}": {
@@ -362,18 +375,14 @@
             }
           }
         },
-        "responses": {
-          "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ProductItemResponse" } } } },
-          "401": { "description": "Não autorizado", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } },
-          "404": { "description": "Não encontrado", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } }
-        }
+        "responses": { "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ProductItemResponse" } } } }, "401": { "description": "Não autorizado", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } }, "403": { "description": "Proibido (admin apenas)", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } }, "404": { "description": "Não encontrado", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } } }
       },
       "delete": {
         "summary": "Remover produto",
         "tags": ["Products"],
         "security": [{ "bearerAuth": [] }],
         "parameters": [ { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } } ],
-        "responses": { "204": { "description": "Sem conteúdo" }, "401": { "description": "Não autorizado", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } } }
+        "responses": { "204": { "description": "Sem conteúdo" }, "401": { "description": "Não autorizado", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } }, "403": { "description": "Proibido (admin apenas)", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } } }
       }
     }
   }

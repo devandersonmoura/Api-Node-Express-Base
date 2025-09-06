@@ -3,7 +3,7 @@ const { success } = require('../helpers/http');
 const userService = require('../services/userService');
 const authService = require('../services/authService');
 
-/** Registra um novo usuário e já retorna um token JWT. */
+/** Registra um novo usuário (role padrão: user) e já retorna um token JWT. */
 async function register(req, res) {
   const created = await userService.createUser(req.body);
   // Emitir token imediatamente após o registro.

@@ -33,7 +33,7 @@ async function findAll({ limit, offset, search }) {
 async function findById(id) {
   const pool = getPool();
   const [rows] = await pool.query(
-    'SELECT id, name, email, created_at, updated_at FROM users WHERE id = ? LIMIT 1',
+    'SELECT id, name, email, role, created_at, updated_at FROM users WHERE id = ? LIMIT 1',
     [id]
   );
   return rows[0] || null;
@@ -47,10 +47,10 @@ async function findById(id) {
 async function create({ name, email, passwordHash }) {
   const pool = getPool();
   const [result] = await pool.query(
-    'INSERT INTO users (name, email, password_hash) VALUES (?, ?, ?)',
-    [name, email, passwordHash]
+    'INSERT INTO users (name, email, password_hash, role) VALUES (?, ?, ?, ?)',
+    [name, email, passwordHash, 'user']
   );
-  return { id: result.insertId, name, email };
+  return { id: result.insertId, name, email, role: 'user' };
 }
 
 /**
@@ -91,7 +91,7 @@ async function remove(id) {
 async function findByEmail(email) {
   const pool = getPool();
   const [rows] = await pool.query(
-    'SELECT id, name, email, password_hash, created_at, updated_at FROM users WHERE email = ? LIMIT 1',
+    'SELECT id, name, email, role, password_hash, created_at, updated_at FROM users WHERE email = ? LIMIT 1',
     [email]
   );
   return rows[0] || null;
@@ -103,5 +103,16 @@ module.exports = {
   findByEmail,
   create,
   update,
-  remove
+  remove,
+  /**
+   * Atualiza o papel (role) do usuário.
+   * @param {number} id
+   * @param {'user'|'admin'} role
+   * @returns {Promise<any|null>} usuário atualizado ou null se não existir
+   */
+  async setRole(id, role) {
+    const pool = getPool();
+    await pool.query('UPDATE users SET role = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?', [role, id]);
+    return await findById(id);
+  }
 };

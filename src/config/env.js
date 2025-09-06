@@ -15,6 +15,21 @@ const env = {
   jwt: {
     secret: process.env.JWT_SECRET || 'changeme-very-secret',
     expiresIn: process.env.JWT_EXPIRES_IN || '1d'
+  },
+  http: {
+    jsonLimit: process.env.JSON_LIMIT || '1mb',
+    corsOrigins: (process.env.CORS_ORIGINS || '*')
+      .split(',')
+      .map(s => s.trim())
+      .filter(Boolean),
+    rateLimitWindowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || '900000', 10),
+    rateLimitMax: parseInt(process.env.RATE_LIMIT_MAX || '100', 10),
+    authRateLimitWindowMs: parseInt(process.env.AUTH_RATE_LIMIT_WINDOW_MS || '60000', 10),
+    authRateLimitMax: parseInt(process.env.AUTH_RATE_LIMIT_MAX || '10', 10)
+  },
+  docs: {
+    basicUser: process.env.DOCS_BASIC_USER || 'admin',
+    basicPass: process.env.DOCS_BASIC_PASS || 'admin'
   }
 };
 

@@ -67,4 +67,17 @@ async function deleteUser(id) {
   }
 }
 
-module.exports = { listUsers, getUser, createUser, updateUser, deleteUser };
+/**
+ * Promove um usuário para admin.
+ */
+async function promoteUser(id) {
+  const updated = await userRepository.setRole(id, 'admin');
+  if (!updated) {
+    const err = new Error('Usuário não encontrado');
+    err.status = 404;
+    throw err;
+  }
+  return updated;
+}
+
+module.exports = { listUsers, getUser, createUser, updateUser, deleteUser, promoteUser };

@@ -38,4 +38,11 @@ async function destroy(req, res) {
   return res.status(204).send();
 }
 
-module.exports = { index, show, store, update, destroy };
+/** Promove um usuário para admin. */
+async function promote(req, res) {
+  const { id } = req.params;
+  const updated = await userService.promoteUser(Number(id));
+  return success(res, updated);
+}
+
+module.exports = { index, show, store, update, destroy, promote };

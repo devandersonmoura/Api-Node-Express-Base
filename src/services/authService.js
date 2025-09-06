@@ -29,7 +29,7 @@ async function login({ email, password }) {
     throw err;
   }
   const safe = sanitizeUser(user);
-  const token = sign({ id: safe.id, email: safe.email, name: safe.name });
+  const token = sign({ id: safe.id, email: safe.email, name: safe.name, role: safe.role || 'user' });
   return { user: safe, token };
 }
 

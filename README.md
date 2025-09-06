@@ -30,6 +30,7 @@ API em Node.js/Express com MySQL (sem ORM), autenticação JWT e documentação 
 - `GET /health` → `{ "status": "ok" }`
 - `GET /ready` → `{ "status": "ready" }` quando o MySQL estiver acessível; caso contrário retorna 503
 - Users: `GET/POST /api/users`, `GET/PUT/DELETE /api/users/:id`
+- Users (admin): `POST /api/users/:id/promote` (promover a admin)
 - Products: `GET/POST /api/products`, `GET/PUT/DELETE /api/products/:id`
 - Auth: `POST /api/auth/register`, `POST /api/auth/login`, `GET /api/auth/me`
 
@@ -44,6 +45,7 @@ API em Node.js/Express com MySQL (sem ORM), autenticação JWT e documentação 
 
 - UI da documentação: `http://localhost:3000/docs`
 - Especificação OpenAPI: `docs/openapi.json`
+ - Protegido com Basic Auth: `admin` / `admin` (padrões configuráveis via `.env`)
 
 ## Health vs Ready
 
@@ -83,3 +85,33 @@ scripts/
 - A API usa MySQL via `mysql2` (sem Sequelize/ORM) e acesso direto nos repositórios.
 - Validação com `Joi` no middleware `validate`.
 - Autenticação por JWT com `jsonwebtoken` e middleware `requireAuth`.
+- RBAC: rotas de usuários exigem `admin`; produtos exigem `admin` para criar/atualizar/remover.
+- `/docs` protegido com Basic Auth (configurável por env): `DOCS_BASIC_USER` e `DOCS_BASIC_PASS`.
+
+## Logs e Observabilidade
+
+- Logs estruturados (JSON) com `pino-http`, incluindo `X-Request-Id` por requisição.
+- Cabeçalho `X-Request-Id` exposto nas respostas; envie-o em chamadas subsequentes para correlação.
+
+## Segurança
+
+- Headers e hardening:
+  - `helmet` aplicado; `app.disable('x-powered-by')` para ocultar stack.
+  - `hpp` contra HTTP Parameter Pollution.
+- Rate limiting:
+  - Global em `/api`: janela e máximo configuráveis via env.
+  - Mais restrito em `/api/auth` para reduzir brute force.
+- CORS:
+  - Whitelist configurável em `CORS_ORIGINS` (separados por vírgula). Em dev, `*`.
+- Body JSON:
+  - Limite configurável via `JSON_LIMIT` (padrão `1mb`).
+- Conteúdo e parâmetros:
+  - Exige `Content-Type: application/json` em `POST/PUT/PATCH` de `/api`.
+  - `:id` validado como inteiro positivo via `router.param`.
+
+### Variáveis de ambiente (segurança)
+
+- `CORS_ORIGINS=*` (ex.: `https://seusite.com,https://admin.seusite.com` em produção)
+- `JSON_LIMIT=1mb`
+- `RATE_LIMIT_WINDOW_MS=900000` (15 minutos) e `RATE_LIMIT_MAX=100`
+- `AUTH_RATE_LIMIT_WINDOW_MS=60000` (1 minuto) e `AUTH_RATE_LIMIT_MAX=10`

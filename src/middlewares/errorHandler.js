@@ -12,11 +12,15 @@ function notFound(_req, res, _next) {
  * Captura erros lançados nos handlers e retorna JSON padronizado.
  * Loga erros 5xx no console.
  */
-function errorHandler(err, _req, res, _next) {
+function errorHandler(err, req, res, _next) {
   const status = err.status || 500;
   const message = err.message || 'Erro interno do servidor';
   if (status >= 500) {
-    logger.error(err);
+    if (req && req.log && typeof req.log.error === 'function') {
+      req.log.error({ err }, 'Unhandled error');
+    } else {
+      logger.error(err);
+    }
   }
   return fail(res, message, status, process.env.NODE_ENV === 'development' ? err.stack : undefined);
 }

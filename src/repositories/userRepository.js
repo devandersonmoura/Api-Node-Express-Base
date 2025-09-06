@@ -114,5 +114,11 @@ module.exports = {
     const pool = getPool();
     await pool.query('UPDATE users SET role = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?', [role, id]);
     return await findById(id);
+  },
+  /** Conta quantos admins existem atualmente. */
+  async countAdmins() {
+    const pool = getPool();
+    const [[row]] = await pool.query("SELECT COUNT(*) AS total FROM users WHERE role = 'admin'");
+    return row.total;
   }
 };

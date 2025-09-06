@@ -21,6 +21,9 @@ async function show(req, res) {
 /** Cria um usuário (validação acontece no middleware). */
 async function store(req, res) {
   const created = await userService.createUser(req.body);
+  if (req.log && typeof req.log.info === 'function') {
+    req.log.info({ action: 'user.create', actorId: req.user && req.user.id, targetId: created.id, email: created.email }, 'user created');
+  }
   return success(res, created, null, 201);
 }
 
@@ -35,14 +38,54 @@ async function update(req, res) {
 async function destroy(req, res) {
   const { id } = req.params;
   await userService.deleteUser(Number(id));
+  if (req.log && typeof req.log.info === 'function') {
+    req.log.info({ action: 'user.delete', actorId: req.user && req.user.id, targetId: Number(id) }, 'user deleted');
+  }
   return res.status(204).send();
 }
 
 /** Promove um usuário para admin. */
 async function promote(req, res) {
   const { id } = req.params;
+  const before = await userService.getUser(Number(id));
   const updated = await userService.promoteUser(Number(id));
+  if (req.log && typeof req.log.info === 'function') {
+    req.log.info({ action: 'promote', actorId: req.user.id, targetId: Number(id), from: before.role, to: 'admin' }, 'role change');
+  }
   return success(res, updated);
 }
 
-module.exports = { index, show, store, update, destroy, promote };
+/** Rebaixa um usuário para role 'user'. */
+async function demote(req, res) {
+  const { id } = req.params;
+  if (req.user && req.user.id === Number(id)) {
+    const err = new Error('Você não pode rebaixar a si mesmo');
+    err.status = 400;
+    throw err;
+  }
+  const before = await userService.getUser(Number(id));
+  const updated = await userService.demoteUser(Number(id));
+  if (req.log && typeof req.log.info === 'function') {
+    req.log.info({ action: 'demote', actorId: req.user.id, targetId: Number(id), from: before.role, to: 'user' }, 'role change');
+  }
+  return success(res, updated);
+}
+
+/** Define o papel do usuário explicitamente (body.role). */
+async function setRole(req, res) {
+  const { id } = req.params;
+  const { role } = req.body;
+  if (req.user && req.user.id === Number(id) && role === 'user') {
+    const err = new Error('Você não pode rebaixar a si mesmo');
+    err.status = 400;
+    throw err;
+  }
+  const before = await userService.getUser(Number(id));
+  const updated = await userService.setRole(Number(id), role);
+  if (req.log && typeof req.log.info === 'function') {
+    req.log.info({ action: 'setRole', actorId: req.user.id, targetId: Number(id), from: before.role, to: role }, 'role change');
+  }
+  return success(res, updated);
+}
+
+module.exports = { index, show, store, update, destroy, promote, demote, setRole };

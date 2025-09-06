@@ -21,6 +21,9 @@ async function show(req, res) {
 /** Cria um produto (validação acontece no middleware). */
 async function store(req, res) {
   const created = await productService.createProduct(req.body);
+  if (req.log && typeof req.log.info === 'function') {
+    req.log.info({ action: 'product.create', actorId: req.user && req.user.id, targetId: created.id, name: created.name, price: created.price }, 'product created');
+  }
   return success(res, created, null, 201);
 }
 
@@ -28,6 +31,9 @@ async function store(req, res) {
 async function update(req, res) {
   const { id } = req.params;
   const updated = await productService.updateProduct(Number(id), req.body);
+  if (req.log && typeof req.log.info === 'function') {
+    req.log.info({ action: 'product.update', actorId: req.user && req.user.id, targetId: Number(id) }, 'product updated');
+  }
   return success(res, updated);
 }
 
@@ -35,6 +41,9 @@ async function update(req, res) {
 async function destroy(req, res) {
   const { id } = req.params;
   await productService.deleteProduct(Number(id));
+  if (req.log && typeof req.log.info === 'function') {
+    req.log.info({ action: 'product.delete', actorId: req.user && req.user.id, targetId: Number(id) }, 'product deleted');
+  }
   return res.status(204).send();
 }
 

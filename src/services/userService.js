@@ -80,4 +80,48 @@ async function promoteUser(id) {
   return updated;
 }
 
-module.exports = { listUsers, getUser, createUser, updateUser, deleteUser, promoteUser };
+/**
+ * Rebaixa um usuário para role 'user'.
+ */
+async function demoteUser(id) {
+  const before = await userRepository.findById(id);
+  if (!before) {
+    const err = new Error('Usuário não encontrado');
+    err.status = 404;
+    throw err;
+  }
+  if (before.role === 'admin') {
+    const count = await userRepository.countAdmins();
+    if (count <= 1) {
+      const err = new Error('Não é permitido remover o último admin');
+      err.status = 400;
+      throw err;
+    }
+  }
+  const updated = await userRepository.setRole(id, 'user');
+  return updated;
+}
+
+/**
+ * Define o papel do usuário explicitamente (user/admin).
+ */
+async function setRole(id, role) {
+  const before = await userRepository.findById(id);
+  if (!before) {
+    const err = new Error('Usuário não encontrado');
+    err.status = 404;
+    throw err;
+  }
+  if (before.role === 'admin' && role === 'user') {
+    const count = await userRepository.countAdmins();
+    if (count <= 1) {
+      const err = new Error('Não é permitido remover o último admin');
+      err.status = 400;
+      throw err;
+    }
+  }
+  const updated = await userRepository.setRole(id, role);
+  return updated;
+}
+
+module.exports = { listUsers, getUser, createUser, updateUser, deleteUser, promoteUser, demoteUser, setRole };

@@ -3,7 +3,7 @@ const express = require('express');
 const ctrl = require('../controllers/userController');
 const asyncHandler = require('../helpers/asyncHandler');
 const validate = require('../middlewares/validate');
-const { createUserSchema, updateUserSchema } = require('../validators/userValidator');
+const { createUserSchema, updateUserSchema, updateRoleSchema } = require('../validators/userValidator');
 
 const { requireAuth, requireRole } = require('../middlewares/auth');
 const { validateIdParam } = require('../middlewares/params');
@@ -30,5 +30,11 @@ router.delete('/:id', asyncHandler(ctrl.destroy));
 
 // Promove usuário para admin
 router.post('/:id/promote', asyncHandler(ctrl.promote));
+
+// Rebaixa usuário para role 'user'
+router.post('/:id/demote', asyncHandler(ctrl.demote));
+
+// Define explicitamente o papel do usuário (user/admin)
+router.put('/:id/role', validate(updateRoleSchema), asyncHandler(ctrl.setRole));
 
 module.exports = router;

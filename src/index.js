@@ -17,12 +17,39 @@ const app = express();
 
 // Middlewares globais
 app.disable('x-powered-by');
+app.set('trust proxy', true); // permite obter IP real atrás de proxies
 app.use(helmet());
 app.use(hpp());
 
-// Logs estruturados + request-id
+// Logs estruturados + request-id + props extras (IP, user-agent)
 app.use(pinoHttp({
   genReqId: (req) => req.headers['x-request-id'] || randomUUID(),
+  customProps: function (req, _res) {
+    // Captura referer apenas se for externo (domínio diferente do Host)
+    const host = req.headers['host'];
+    const refHeader = req.headers['referer'] || req.headers['referrer'];
+    let safeReferer;
+    if (refHeader) {
+      try {
+        const refUrl = new URL(refHeader);
+        if (refUrl.host && host) {
+          const isSameHost = refUrl.host === host;
+          const trusted = (env.logs && Array.isArray(env.logs.trustedHosts)) ? env.logs.trustedHosts : [];
+          const isTrusted = trusted.some(th => refUrl.host === th || refUrl.host.endsWith('.' + th));
+          if (!isSameHost && !isTrusted) {
+            safeReferer = refHeader;
+          }
+        }
+      } catch (_e) {
+        // ignore parse errors
+      }
+    }
+    return {
+      ip: req.ip,
+      userAgent: req.headers['user-agent'],
+      referer: safeReferer
+    };
+  },
   customSuccessMessage: function (req, res) {
     return `${req.method} ${req.url} ${res.statusCode}`;
   },
@@ -113,4 +140,3 @@ app.use(errorHandler);
 app.listen(env.port, () => {
   console.log(`Server listening on http://localhost:${env.port}`);
 });
-

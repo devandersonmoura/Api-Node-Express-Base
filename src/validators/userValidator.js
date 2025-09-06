@@ -15,4 +15,9 @@ const updateUserSchema = Joi.object({
   password: Joi.string().min(6).max(128)
 }).min(1);
 
-module.exports = { createUserSchema, updateUserSchema };
+// Body para atualização de papel (role)
+const updateRoleSchema = Joi.object({
+  role: Joi.string().valid('user', 'admin').required()
+});
+
+module.exports = { createUserSchema, updateUserSchema, updateRoleSchema };

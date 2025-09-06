@@ -30,6 +30,12 @@ const env = {
   docs: {
     basicUser: process.env.DOCS_BASIC_USER || 'admin',
     basicPass: process.env.DOCS_BASIC_PASS || 'admin'
+  },
+  logs: {
+    trustedHosts: (process.env.LOG_TRUSTED_HOSTS || '')
+      .split(',')
+      .map(s => s.trim())
+      .filter(Boolean)
   }
 };
 

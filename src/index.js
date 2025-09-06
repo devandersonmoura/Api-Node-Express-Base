@@ -12,9 +12,6 @@ const rateLimit = require('express-rate-limit');
 const pinoHttp = require('pino-http');
 const { randomUUID } = require('crypto');
 const { basicAuthForDocs } = require('./middlewares/basicAuth');
-const helmet = require('helmet');
-const hpp = require('hpp');
-const rateLimit = require('express-rate-limit');
 
 const app = express();
 
